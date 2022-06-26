@@ -50,6 +50,24 @@ func init(){
 	db = sess.DB(dbName)
 }
 
+func main(){
+	r := chi.NewRouter()
+	r.Use(middleware.Logger)
+	r.Get("/", homeHandler)
+	r.Mount("/todo", todoHandlers())
+}
+
+func todoHandlers() http.Handler{
+	rg:= chi.NewRouter()
+	rg.Group(func(r chi.Router){
+		r.Get("/", fetchTodos)
+		r.Post("/", creatTodo)
+		r.Put("/{id}", updateTodo)
+		r.Delete("/{id}") deleteTodo
+	})
+	return rg
+}
+
 func checkErr(err error){
 	if err!=nil{
 		log.Fatal(err)
