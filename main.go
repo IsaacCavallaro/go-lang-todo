@@ -90,7 +90,7 @@ func createTodo(w http.ResponseWriter, r *http.Request){
 
 	if t.Title == "" {
 		rnd.JSON(w, http.StatusBadRequest, renderer.M(
-			"Message: The title is required"
+			"Message: The title is required",
 		))
 		return
 	}
@@ -104,15 +104,39 @@ func createTodo(w http.ResponseWriter, r *http.Request){
 
 	if err := db.c(collectionName).Insert(&tm); err !=nil {
 		rnd.JSON(w, http.StatusProcessing,renderer.M(
-			"Message: Failed to save todo"
+			"Message: Failed to save todo",
 		))
 		return
 	}
 
-	rnd.JSON(w, http.statusCreated, renderer.M(
-		"Message: todo created successfully"
-		"todo_id:" tm.ID.Hex()
+	rnd.JSON(w, http.StatusCreated, renderer.M(
+		"Message: todo created successfully",
+		"todo_id:" tm.ID.Hex(),
 	))
+}
+
+func deleteTodo(w http.ResponseWriter, r *http.Request){
+	id := strings.TrimSpace(chi.URLParam(r, "id"))
+
+	if lbson.IsObjectIdhex(id) {
+		rnd.JSON(w, http.StatusBadRequest, renderer.M(
+			"Message: the id is invalid",
+		))
+		return
+	}
+
+	if err := db.c(collectionName).RemoveId(bson.ObjectIdhex(id)); err !=nil {
+		rnd.JSON(w, http.StatusProcessing, renderer.M(
+			"Message: failed to delete todo", 
+			"error:" err,
+		))
+		return
+	}
+
+	rnd.JSON(w, http.StatusOK, renderer.M(
+		"Message: todo deleted successfully",
+	))
+
 }
 
 func main(){
