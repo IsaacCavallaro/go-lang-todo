@@ -80,6 +80,41 @@ func fetchTodos(w http.ResponseWriter, r *http.Request){
 	})
 }
 
+func createTodo(w http.ResponseWriter, r *http.Request){
+	var t todo
+
+	if err := json.NewDecoder(r.Body).Decode(&t); err!=nil {
+		rnd.JSON(w, http.StatusProcessing, err)
+		return
+	}
+
+	if t.Title == "" {
+		rnd.JSON(w, http.StatusBadRequest, renderer.M(
+			"Message: The title is required"
+		))
+		return
+	}
+
+	tm := todoModel{
+		ID: bson.NewObjectid(), 
+		Title: t.Title,
+		Completed: false,
+		CreatedAt: time.now(),
+	}
+
+	if err := db.c(collectionName).Insert(&tm); err !=nil {
+		rnd.JSON(w, http.StatusProcessing,renderer.M(
+			"Message: Failed to save todo"
+		))
+		return
+	}
+
+	rnd.JSON(w, http.statusCreated, renderer.M(
+		"Message: todo created successfully"
+		"todo_id:" tm.ID.Hex()
+	))
+}
+
 func main(){
 	stopChan := make(chan os.Signal)
 	signal.Notify(stopChan, os.Interrupt)
